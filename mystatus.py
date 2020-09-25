@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 
 import datetime
 import json
@@ -20,6 +20,7 @@ dirty_down_thresh = 10_000
 disk_dict = dict()
 
 def parse_line(line):
+	print(line)
 	global mixer
 	line_split = line.split()
 	if line_split[0] != 'volume':
@@ -33,6 +34,10 @@ def parse_line(line):
 	elif line_split[2] == 'toggle':
 		mute = [1 - x for x in mixer[line_split[1]].getmute()]
 		mixer[line_split[1]].setmute(mute[0])
+	elif line_split[2] == 'mute':
+		mixer[line_split[1]].setmute(1)
+	elif line_split[2] == 'unmute':
+		mixer[line_split[1]].setmute(0)
 	else:
 		return
 

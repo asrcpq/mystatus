@@ -1,0 +1,30 @@
+#!/bin/sh
+fifo_file="$XDG_DATA_HOME/mystatus/fifo"
+
+flush_data() {
+	if [ "$2" = "block" ]; then
+		mkdir -p "$XDG_DATA_HOME/volume_control"
+		echo "volume $1 mute" >> "$fifo_file"
+		touch "$XDG_DATA_HOME/volume_control/block_$1"
+		return
+	fi
+	if [ "$2" = "unblock" ]; then
+		rm -f "$XDG_DATA_HOME/volume_control/block_$1"
+		return
+	fi
+	[ -f "$XDG_DATA_HOME/volume_control/block_$1" ] && return
+	if [ "$2" = "up" ]; then
+		echo "volume $1 up" >> "$fifo_file"
+	elif [ "$2" = "down" ]; then
+		echo "volume $1 down" >> "$fifo_file"
+	else
+		echo "volume $1 toggle" >> "$fifo_file"
+	fi
+}
+
+flush_data $1 $2
+
+if [ -r "$XDG_DATA_HOME/mystatus/pid" ]; then
+	pid="$(cat "$XDG_DATA_HOME/mystatus/pid")"
+	( ps -p $pid -o cmd= | grep -q mystatus ) && kill -34 $pid
+fi
