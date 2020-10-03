@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import datetime
 import json
@@ -20,7 +20,6 @@ dirty_down_thresh = 10_000
 disk_dict = dict()
 
 def parse_line(line):
-	print(line)
 	global mixer
 	line_split = line.split()
 	if line_split[0] != 'volume':
@@ -91,6 +90,8 @@ def module_cpufreq():
 			cpu_usage1 = new1
 			cpu_usage2 = new2
 		result = {"full_text": "C:" + str(avg_freq) + " " + str(usage_percent) + "%"}
+		if usage_percent > 50:
+			result['color'] = '#FF0000'
 		mystatus['cpufreq'] = result
 	except FileNotFoundError:
 		pass
