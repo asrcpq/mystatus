@@ -7,7 +7,6 @@ import os
 import re
 import signal
 import sys
-from alsaaudio import Mixer, ALSAAudioError
 from netaddr import IPAddress
 from time import sleep
 
@@ -19,51 +18,8 @@ dirty_up_thresh = 100_000
 dirty_down_thresh = 10_000
 disk_dict = dict()
 
-def parse_line(line):
-	global mixer
-	line_split = line.split()
-	if line_split[0] != 'volume':
-		return
-	if line_split[2] == 'up':
-		volume = [min(100, x + 3) for x in mixer[line_split[1]].getvolume()]
-		mixer[line_split[1]].setvolume(volume[0])
-	elif line_split[2] == 'down':
-		volume = [max(0, x - 3) for x in mixer[line_split[1]].getvolume()]
-		mixer[line_split[1]].setvolume(volume[0])
-	elif line_split[2] == 'toggle':
-		mute = [1 - x for x in mixer[line_split[1]].getmute()]
-		mixer[line_split[1]].setmute(mute[0])
-	elif line_split[2] == 'mute':
-		mixer[line_split[1]].setmute(1)
-	elif line_split[2] == 'unmute':
-		mixer[line_split[1]].setmute(0)
-	else:
-		return
-
-def try_readline():
-	global fifoid
-	line = ''
-	while True:
-		buf = os.read(fifoid, 1)
-		if not buf:
-			break
-		else:
-			if buf == b'\n':
-				parse_line(line)
-				line = ''
-			else:
-				line += buf.decode('utf-8')
-
-def flush_volume(sig, frame):
-	global flush_flag
-	try_readline()
-	module_volume(True)
-	flush_status()
-	flush_flag = True
-
 def flush_all(sig, frame):
 	global flush_flag
-	try_readline()
 	update_modules()
 	flush_status()
 	flush_flag = True
@@ -194,26 +150,6 @@ def module_battery():
 	except FileNotFoundError:
 		pass
 
-def module_volume(verbose = False):
-	global mixer, mixer_list
-	mystatus.pop('volume', None)
-	if 'Master' not in mixer_list:
-		return
-	volume = 'V:'
-	if not verbose:
-		ch_list = ['Master']
-	else:
-		ch_list = mixer_list
-	for channel in ch_list:
-		vol_list = mixer[channel].getvolume()
-		volume += channel[0] + str(sum(vol_list) // len(vol_list))
-		if mixer[channel].getmute()[0] == 1:
-			volume += 'M '
-		else:
-			volume += '% '
-	result = {"full_text": volume[:-1]}
-	mystatus['volume'] = result
-
 def module_date():
 	mystatus.pop('date', None)
 	now = datetime.datetime.now()
@@ -231,7 +167,6 @@ module_list = [
 	'busydisk',
 	'default_gateway',
 	'battery',
-	'volume',
 	'date',
 ]
 
@@ -256,9 +191,7 @@ def main_loop():
 		flush_status()
 
 def main():
-	global mixer, mixer_list
 	global fifoid
-	signal.signal(signal.SIGRTMIN, flush_volume)
 	signal.signal(signal.SIGCONT, flush_all)
 	fifo_path = os.environ['XDG_DATA_HOME'] + '/mystatus/fifo'
 	pid_path = os.environ['XDG_DATA_HOME'] + '/mystatus/pid'
@@ -272,14 +205,6 @@ def main():
 	)
 	print(os.getpid(), file = open(pid_path, 'w'))
 	print('{"version":1}[')
-	mixer = dict()
-	mixer_list = []
-	for mixer_id in ('Master', 'Headphone', 'Speaker'):
-		try:
-			mixer[mixer_id] = Mixer(mixer_id)
-			mixer_list.append(mixer_id)
-		except ALSAAudioError:
-			pass
 	update_modules()
 	flush_status()
 	main_loop()
