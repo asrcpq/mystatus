@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import datetime
+import glob
 import json
 import netifaces
 import os
@@ -54,16 +55,19 @@ def module_cpufreq():
 
 def module_cputemp():
 	mystatus.pop('cputemp', None)
-	try:
-		with open('/sys/devices/LNXSYSTM:00/LNXCPU:00/thermal_cooling/subsystem/thermal_zone0/temp', 'r') as f:
-			line = f.readline()
-			temp = int(line) // 1000
-			result = {"full_text": "T:" + str(temp)}
-			if temp > 85:
-				result['color'] = '#FF0000'
-			mystatus['cputemp'] = result
-	except FileNotFoundError:
-		pass
+	fn_list = glob.glob('/sys/class/hwmon/hwmon*/temp*_input')
+	if len(fn_list) == 0:
+		return
+	temp = -274
+	for filename in fn_list:
+		with open(filename) as f:
+			new_data = int(f.readline()) // 1000
+			if new_data > temp:
+				temp = new_data
+	result = {"full_text": "T:" + str(temp)}
+	if temp > 85:
+		result['color'] = '#FF0000'
+	mystatus['cputemp'] = result
 
 def module_memory():
 	global dirty_flag
