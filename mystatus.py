@@ -59,15 +59,18 @@ def module_cputemp():
 	if len(fn_list) == 0:
 		return
 	temp = -274
-	for filename in fn_list:
-		with open(filename) as f:
-			new_data = int(f.readline()) // 1000
-			if new_data > temp:
-				temp = new_data
-	result = {"full_text": "T:" + str(temp)}
-	if temp > 85:
-		result['color'] = '#FF0000'
-	mystatus['cputemp'] = result
+	try:
+		for filename in fn_list:
+			with open(filename) as f:
+				new_data = int(f.readline()) // 1000
+				if new_data > temp:
+					temp = new_data
+		result = {"full_text": "T:" + str(temp)}
+		if temp > 85:
+			result['color'] = '#FF0000'
+		mystatus['cputemp'] = result
+	except OSError:
+		pass
 
 def module_memory():
 	global dirty_flag
