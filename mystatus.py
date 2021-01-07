@@ -198,19 +198,7 @@ def main_loop():
 		flush_status()
 
 def main():
-	global fifoid
 	signal.signal(signal.SIGCONT, flush_all)
-	fifo_path = os.environ['XDG_DATA_HOME'] + '/mystatus/fifo'
-	pid_path = os.environ['XDG_DATA_HOME'] + '/mystatus/pid'
-	try:
-		os.mkfifo(fifo_path)
-	except FileExistsError:
-		pass
-	fifoid = os.open(
-		fifo_path,
-		os.O_RDONLY | os.O_NONBLOCK,
-	)
-	print(os.getpid(), file = open(pid_path, 'w'))
 	print('{"version":1}[')
 	update_modules()
 	flush_status()
