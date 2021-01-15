@@ -7,4 +7,5 @@ if ! [ -d "$XDG_DATA_HOME/mystatus/venv" ]; then
 else
 	. "$XDG_DATA_HOME/mystatus/venv/bin/activate"
 fi
-python3 "$(dirname "$0")/mystatus.py"
+ERROR_FILE="$XDG_DATA_HOME/mystatus/error.log"
+python3 "$(dirname "$0")/mystatus.py" 2>"$ERROR_FILE"
