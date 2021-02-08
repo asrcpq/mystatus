@@ -87,10 +87,10 @@ def module_memory():
 		full_text = 'M:' + str(f_per) + '/' + str(a_per)
 		warn_sig = False
 		if dirty_flag:
+			full_text += '-' + str(dirty // 1000)
 			if dirty < dirty_down_thresh:
 				dirty_flag = False
 		if dirty > dirty_up_thresh:
-			full_text += '-' + str(dirty // 1000)
 			warn_sig = True
 			dirty_flag = True
 		if a_per < 10:
