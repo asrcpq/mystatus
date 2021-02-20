@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+cd "$(dirname "$0")/.."
+if ! [ -d "$XDG_DATA_HOME/mystatus/venv" ]; then
+	mkdir venv
+	python3 -m venv ./venv
+	. ./venv/bin/activate
+	pip3 install -r requirements.txt
+fi
